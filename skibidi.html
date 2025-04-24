@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -32,7 +32,7 @@
 <body>
   <h1>YouTube Search & Playlist</h1>
   <div id="g_id_onload"
-       data-client_id="115013345855-9tsuch37tc0fli0svna8tnn7h6vuoegf.apps.googleusercontent.com"
+       data-client_id="115013345855-2gpbpj8bpn1soji945tpetc367cp0d80.apps.googleusercontent.com"
        data-context="signin"
        data-ux_mode="popup"
        data-callback="handleCredentialResponse"
@@ -65,11 +65,10 @@
 
   <script>
     let playlist = JSON.parse(localStorage.getItem('customPlaylist') || '[]');
-    const apiKey = 'AIzaSyA7cvl52WvGE0CTFOi2cOlsjhPc9oKRhNA';
+    const apiKey = 'AIzaSyA7cvl52WvGE0CTFOi2cOlsjhPc9oKRhNA'; // Your API Key here
 
     function handleCredentialResponse(response) {
       console.log("Logged in! JWT ID token:", response.credential);
-      // In a real app, you'd send this token to your backend server to verify
       alert("Signed in with Google successfully!");
     }
 
@@ -151,7 +150,6 @@
         });
     }
 
-    // Initial load
     updatePlaylist();
   </script>
 </body>
