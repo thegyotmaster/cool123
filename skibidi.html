@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube Search & Playlist</title>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    body {
+      background-color: #121212;
+      color: #ffffff;
+      font-family: sans-serif;
+      text-align: center;
+      padding: 30px;
+    }
+    input, button, select {
+      padding: 10px;
+      margin: 5px;
+      border-radius: 5px;
+    }
+    .video-result {
+      margin-top: 20px;
+    }
+    iframe {
+      border-radius: 8px;
+    }
+    .playlist {
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+  <h1>YouTube Search & Playlist</h1>
+  <div id="g_id_onload"
+       data-client_id="115013345855-9tsuch37tc0fli0svna8tnn7h6vuoegf.apps.googleusercontent.com"
+       data-context="signin"
+       data-ux_mode="popup"
+       data-callback="handleCredentialResponse"
+       data-auto_prompt="false">
+  </div>
+  <div class="g_id_signin"
+       data-type="standard"
+       data-shape="rectangular"
+       data-theme="filled_blue"
+       data-text="sign_in_with"
+       data-size="large">
+  </div>
+
+  <form onsubmit="searchYouTube(); return false;">
+    <input type="text" id="searchInput" placeholder="Search YouTube videos" size="50">
+    <button type="submit">Search</button>
+  </form>
+
+  <div id="results" class="video-result"></div>
+
+  <div class="playlist">
+    <h2>My Playlist</h2>
+    <select id="playlistSelector" onchange="loadPlaylist(this.value)">
+      <option value="">-- Select Playlist --</option>
+      <option value="PLCQ_St5Fs8XXXmVQ4LWZS5rQq190IhdFW">Good Videos</option>
+      <option value="PL_Pju7c6Qd0iQzDs4kCaqym_BUcbquz2J">Best Furry Videos</option>
+    </select>
+    <div id="playlist"></div>
+  </div>
+
+  <script>
+    let playlist = JSON.parse(localStorage.getItem('customPlaylist') || '[]');
+    const apiKey = 'AIzaSyA7cvl52WvGE0CTFOi2cOlsjhPc9oKRhNA';
+
+    function handleCredentialResponse(response) {
+      console.log("Logged in! JWT ID token:", response.credential);
+      // In a real app, you'd send this token to your backend server to verify
+      alert("Signed in with Google successfully!");
+    }
+
+    function searchYouTube() {
+      const query = document.getElementById('searchInput').value;
+      const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=5&key=${apiKey}`;
+
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          const resultsDiv = document.getElementById('results');
+          resultsDiv.innerHTML = '';
+
+          data.items.forEach(item => {
+            const videoId = item.id.videoId;
+            const title = item.snippet.title;
+            const thumbnail = item.snippet.thumbnails.medium.url;
+            const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+
+            const videoElement = document.createElement('div');
+            videoElement.innerHTML = `
+              <div style="margin-bottom: 20px;">
+                <img src="${thumbnail}" alt="${title}"><br>
+                <strong>${title}</strong><br>
+                <iframe width="360" height="200" src="https://www.youtube.com/embed/${videoId}?autoplay=1" frameborder="0" allowfullscreen></iframe><br>
+                <button onclick="addToPlaylist('${title}', '${videoUrl}')">Add to Playlist</button>
+              </div>
+            `;
+            resultsDiv.appendChild(videoElement);
+          });
+        })
+        .catch(error => {
+          console.error('Error fetching videos:', error);
+          alert('There was an error. Make sure your API key is correct and try again.');
+        });
+    }
+
+    function addToPlaylist(title, url) {
+      playlist.push({ title, url });
+      localStorage.setItem('customPlaylist', JSON.stringify(playlist));
+      updatePlaylist();
+    }
+
+    function updatePlaylist() {
+      const playlistDiv = document.getElementById('playlist');
+      playlistDiv.innerHTML = '';
+
+      playlist.forEach(video => {
+        const videoId = video.url.split('v=')[1];
+        const item = document.createElement('div');
+        item.innerHTML = `
+          <p><strong>${video.title}</strong></p>
+          <iframe width="360" height="200" src="https://www.youtube.com/embed/${videoId}?autoplay=1" frameborder="0" allowfullscreen></iframe>
+        `;
+        playlistDiv.appendChild(item);
+      });
+    }
+
+    function loadPlaylist(playlistId) {
+      if (!playlistId) return;
+      const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=10&key=${apiKey}`;
+
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          playlist = data.items.map(item => {
+            const title = item.snippet.title;
+            const videoId = item.snippet.resourceId.videoId;
+            return {
+              title,
+              url: `https://www.youtube.com/watch?v=${videoId}`
+            };
+          });
+          localStorage.setItem('customPlaylist', JSON.stringify(playlist));
+          updatePlaylist();
+        })
+        .catch(err => {
+          console.error('Failed to load playlist:', err);
+        });
+    }
+
+    // Initial load
+    updatePlaylist();
+  </script>
+</body>
+</html>
